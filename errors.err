@@ -1,0 +1,33 @@
+ninja: Entering directory `build'
+[1/2] Building CXX object tests/CMakeFiles/frp_test.dir/stream_test.cpp.o
+FAILED: tests/CMakeFiles/frp_test.dir/stream_test.cpp.o 
+/usr/bin/c++   -isystem ../external/catch2/include -isystem ../include -fdiagnostics-color=always -std=gnu++17 -MD -MT tests/CMakeFiles/frp_test.dir/stream_test.cpp.o -MF tests/CMakeFiles/frp_test.dir/stream_test.cpp.o.d -o tests/CMakeFiles/frp_test.dir/stream_test.cpp.o -c ../tests/stream_test.cpp
+In file included from ../tests/stream_test.cpp:4:
+../include/frp/frp.h: In instantiation of ‘frp::mapped_stream<TA, TB>::mapped_stream(const frp::stream<T>&, frp::mapped_stream<TA, TB>::function_type) [with TA = int; TB = int; frp::mapped_stream<TA, TB>::function_type = std::function<int(const int&)>]’:
+../include/frp/frp.h:98:83:   required from ‘frp::mapped_stream<TA, decltype (declval<F>()(declval<TA>()))> frp::map(const frp::stream<T>&, F) [with TA = int; F = ____C_A_T_C_H____T_E_S_T____2()::<lambda(int)>; decltype (declval<F>()(declval<TA>())) = int]’
+../tests/stream_test.cpp:25:67:   required from here
+../include/frp/frp.h:77:23: error: ‘std::shared_ptr<frp::detail::node<int> > frp::stream<int>::pNode_’ is protected within this context
+   77 |         : pDepNode_(a.pNode_)
+      |                     ~~^~~~~~
+../include/frp/frp.h:52:38: note: declared protected here
+   52 |     std::shared_ptr<detail::node<T>> pNode_;
+      |                                      ^~~~~~
+../include/frp/frp.h:78:26: error: no matching function for call to ‘frp::detail::signal_connection::signal_connection()’
+   78 |         , f_(std::move(f))
+      |                          ^
+In file included from ../include/frp/frp.h:4,
+                 from ../tests/stream_test.cpp:4:
+../include/frp/detail/signal.h:49:5: note: candidate: ‘frp::detail::signal_connection::signal_connection(std::weak_ptr<frp::detail::signal_shared_state>, int)’
+   49 |     signal_connection(std::weak_ptr<signal_shared_state> state, int id)
+      |     ^~~~~~~~~~~~~~~~~
+../include/frp/detail/signal.h:49:5: note:   candidate expects 2 arguments, 0 provided
+../include/frp/detail/signal.h:36:7: note: candidate: ‘frp::detail::signal_connection::signal_connection(const frp::detail::signal_connection&)’
+   36 | class signal_connection
+      |       ^~~~~~~~~~~~~~~~~
+../include/frp/detail/signal.h:36:7: note:   candidate expects 1 argument, 0 provided
+../include/frp/detail/signal.h:36:7: note: candidate: ‘frp::detail::signal_connection::signal_connection(frp::detail::signal_connection&&)’
+../include/frp/detail/signal.h:36:7: note:   candidate expects 1 argument, 0 provided
+../include/frp/detail/signal.h:68:37: error: ‘frp::detail::signal_connection frp::detail::signal<TRet(TArgs ...)>::listen(TSlot&&) const [with TSlot = frp::mapped_stream<TA, TB>::mapped_stream(const frp::stream<T>&, frp::mapped_stream<TA, TB>::function_type) [with TA = int; TB = int; frp::mapped_stream<TA, TB>::function_type = std::function<int(const int&)>]::<lambda(const int&)>; TRet = void; TArgs = {int}]’, declared using local type ‘frp::mapped_stream<TA, TB>::mapped_stream(const frp::stream<T>&, frp::mapped_stream<TA, TB>::function_type) [with TA = int; TB = int; frp::mapped_stream<TA, TB>::function_type = std::function<int(const int&)>]::<lambda(const int&)>’, is used but never defined [-fpermissive]
+   68 |     [[nodiscard]] signal_connection listen(TSlot &&slot) const
+      |                                     ^~~~~~
+ninja: build stopped: subcommand failed.
