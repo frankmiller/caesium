@@ -14,7 +14,11 @@ public:
         : c_(c)
     {
     }
-    void disconnect() { c_.disconnect(); }
+
+    void disconnect()
+    {
+        c_.disconnect();
+    }
 
 private:
     detail::signal_connection c_;
@@ -29,84 +33,77 @@ struct node
 };
 } // namespace detail
 
-template <typename TA, typename TB>
-class mapped_stream;
+template <typename TFun, typename... TDeps>
+class stream;
 
-template <typename T>
-class stream
+template <class T>
+class origin
 {
 public:
     using value_type = T;
 
-    virtual ~stream() = default;
-
-    template <typename TSlot>
-    [[nodiscard]] connection listen(const TSlot slot) const
+    origin()
+        : pNode_(std::make_shared<detail::node<value_type>>())
     {
-        return pNode_->signal_.listen(slot);
     }
 
-protected:
-    template <typename TT>
+    void send(const T& v)
+    {
+        pNode_->signal_(v);
+    }
+
+    void send(T&& v)
+    {
+        pNode_->signal_(std::move(v));
+    }
+
+private:
+    template <typename TTFun, typename... TTDeps>
     friend class stream;
-
-    template <typename TTA, typename TTB>
-    friend class mapped_stream;
-
-    stream()
-        : pNode_(std::make_shared<detail::node<T>>())
-    {
-    }
 
     std::shared_ptr<detail::node<T>> pNode_;
 };
 
-template <class T>
-class stream_origin : public stream<T>
+template <typename TFun, typename... TDeps>
+class stream
 {
 public:
-    void send(const T & v)
-    {
-        this->pNode_->signal_(v);
-    }
+    using value_type =
+        decltype(std::declval<TFun>()(std::declval<typename TDeps::value_type>()...));
 
-    void send(T && v)
-    {
-        this->pNode_->signal_(v);
-    }
-};
-
-template <typename TA, typename TB>
-class mapped_stream : public stream<TB>
-{
-public:
-    using function_type = std::function<TB(const TA &)>;
-
-    mapped_stream(const stream<TA> & a, function_type f)
-        : pDepNode_(a.pNode_)
+    stream(TFun f, TDeps&... srcs)
+        : pNode_(std::make_shared<detail::node<value_type>>())
+        , depNodes_{srcs.pNode_...}
+        , depConnections_(
+              connectToAllNodes(std::make_index_sequence<sizeof...(TDeps)>{}, depNodes_))
         , f_(f)
     {
-        connection_ = pDepNode_->signal_.listen([this](const TA & x) {
-            this->pNode_->signal_(f_(x));
-        });
     }
 
-    ~mapped_stream()
+    ~stream()
     {
-        connection_.disconnect();
+        disconnectFromAllNodes();
     }
 
 private:
-    std::shared_ptr<detail::node<TA>> pDepNode_;
-    function_type f_;
-    detail::signal_connection connection_;
+    template <std::size_t... I, typename... TValues>
+    auto connectToAllNodes(std::index_sequence<I...>,
+                           const std::tuple<std::shared_ptr<detail::node<TValues>>...>& nodes)
+    {
+        return std::array{std::get<I>(nodes)->signal_.listen(
+            [](const auto& x) { std::cout << "wow: " << x << std::endl; })...};
+    }
+
+    auto disconnectFromAllNodes()
+    {
+        for (auto& connection : depConnections_)
+            connection.disconnect();
+    }
+
+    std::shared_ptr<detail::node<value_type>>                                pNode_;
+    std::tuple<std::shared_ptr<detail::node<typename TDeps::value_type>>...> depNodes_;
+    std::array<detail::signal_connection, sizeof...(TDeps)>                  depConnections_;
+    TFun                                                                     f_;
 };
-
-template <typename TA, typename F>
-mapped_stream<TA, decltype(std::declval<F>()(std::declval<TA>()))> map(const stream<TA> & a, F f)
-{
-    return mapped_stream<TA, decltype(std::declval<F>()(std::declval<TA>()))>{a, f};
-}
-
 
 }; // namespace frp
